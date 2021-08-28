@@ -1,4 +1,4 @@
-package Dionysus
+package dionysus
 
 type Args []*Arg
 

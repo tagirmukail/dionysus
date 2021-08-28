@@ -1,4 +1,4 @@
-package Dionysus
+package dionysus
 
 // Node implements Template field
 type Node struct {

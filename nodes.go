@@ -1,3 +1,3 @@
-package Dionysus
+package dionysus
 
 type Nodes []*Node

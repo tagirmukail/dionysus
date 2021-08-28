@@ -1,4 +1,4 @@
-package Dionysus
+package dionysus
 
 // FileType is output file format
 type FileType uint16

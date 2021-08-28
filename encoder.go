@@ -1,4 +1,4 @@
-package Dionysus
+package dionysus
 
 import (
 	"io"

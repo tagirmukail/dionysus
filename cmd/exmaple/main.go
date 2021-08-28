@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Dionysus"
+	"github.com/tagirmukail/dionysus"
 	"log"
 	"os"
 	"time"
@@ -9,23 +9,23 @@ import (
 
 func main() {
 
-	tmpl := &Dionysus.Template{}
+	tmpl := &dionysus.Template{}
 
-	tmpl.ToOutputFileType(Dionysus.XML).
+	tmpl.ToOutputFileType(dionysus.XML).
 		AddNode(
-			Dionysus.Node{}.To("catalog").AddArg(Dionysus.Arg{}.To("date").StaticVal(time.Now())).
+			dionysus.Node{}.To("catalog").AddArg(dionysus.Arg{}.To("date").StaticVal(time.Now())).
 				AddNode(
-					Dionysus.Node{}.To("products").
-						AddNode(Dionysus.Node{}.To("product").AddArg(Dionysus.Arg{}.To("id").BindTo("data.id")).
-							AddNode(Dionysus.Node{}.To("name").BindTo("data.products.name")).
-							AddNode(Dionysus.Node{}.To("id").BindTo("data.products.id")).
-							AddNode(Dionysus.Node{}.To("price").BindTo("data.products.price")),
+					dionysus.Node{}.To("products").
+						AddNode(dionysus.Node{}.To("product").AddArg(dionysus.Arg{}.To("id").BindTo("data.id")).
+							AddNode(dionysus.Node{}.To("name").BindTo("data.products.name")).
+							AddNode(dionysus.Node{}.To("id").BindTo("data.products.id")).
+							AddNode(dionysus.Node{}.To("price").BindTo("data.products.price")),
 						),
 				).
 				AddNode(
-					Dionysus.Node{}.To("categories").
-						AddNode(Dionysus.Node{}.To("category").BindTo("data.categories.name").
-							AddArg(Dionysus.Arg{}.To("id").BindTo("data.categories.id")),
+					dionysus.Node{}.To("categories").
+						AddNode(dionysus.Node{}.To("category").BindTo("data.categories.name").
+							AddArg(dionysus.Arg{}.To("id").BindTo("data.categories.id")),
 						),
 				),
 		)
@@ -33,7 +33,7 @@ func main() {
 	f, _ := os.Create("output." + tmpl.FileType().String())
 	defer f.Close()
 
-	err := Dionysus.NewEncoder(f).Encode(tmpl)
+	err := dionysus.NewEncoder(f).Encode(tmpl)
 	if err != nil {
 		log.Fatalln(err)
 	}

@@ -1,3 +1,3 @@
-module github.com/tagirmukail/Dionysus
+module github.com/tagirmukail/dionysus
 
 go 1.16
