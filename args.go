@@ -1,40 +1,41 @@
 package dionysus
 
-type Args []*Arg
+type Args []*arg
 
-// Arg implement Node argument
-type Arg struct {
+// arg implement node argument
+type arg struct {
 	to        string
-	bind      string
+	from      string
 	staticVal interface{}
 }
 
-// NewArg creates new instance of Arg
-func NewArg(to, bind string, staticVal interface{}) *Arg {
-	return &Arg{
+func Arg() arg {
+	return arg{}
+}
+
+// NewArg creates new instance of arg
+func NewArg(to string, staticVal interface{}) *arg {
+	return &arg{
 		to:        to,
-		bind:      bind,
 		staticVal: staticVal,
 	}
 }
 
-// BindTo binds this Arg to from data field
-func (a Arg) BindTo(name string) Arg {
-
-	a.bind = name
-
-	return a
-}
-
-// To initialize out binding field name from Arg.bind
-func (a Arg) To(name string) Arg {
+// To initialize out binding field name from arg.bind
+func (a arg) To(name string) arg {
 	a.to = name
 
 	return a
 }
 
+func (a arg) From(from string) arg {
+	a.from = from
+
+	return a
+}
+
 // StaticVal sets this static val to argument if bind data field is empty
-func (a Arg) StaticVal(val interface{}) Arg {
+func (a arg) StaticVal(val interface{}) arg {
 	a.staticVal = val
 
 	return a

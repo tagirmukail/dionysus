@@ -1,18 +1,21 @@
 package dionysus
 
 import (
-	"io"
+	"fmt"
+	"reflect"
 )
 
-type Encoder struct {
-	w io.Writer
-}
-
-func NewEncoder(w io.Writer) *Encoder {
-	return &Encoder{w: w}
-}
-
-func (e *Encoder) Encode(t *Template) error {
-
-	return nil
+func (t *Template) Encode(v interface{}) error {
+	switch t.outputType {
+	//case JSON:
+	//	return t.encodeJSON(v)
+	//case CSV, TSV:
+	//	return t.encodeCSV(v)
+	//case YML:
+	//	return t.encodeYML(v)
+	case XML:
+		return t.encodeXML(reflect.ValueOf(v))
+	default:
+		return fmt.Errorf("unknown file type: %v", t.outputType)
+	}
 }

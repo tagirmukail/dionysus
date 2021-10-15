@@ -1,93 +1,154 @@
 package dionysus
 
-// Node implements Template field
-type Node struct {
+// node implements Template node
+type node struct {
 	to        string
+	from      string
 	bind      string
 	staticVal interface{}
-	nodes     Nodes
+	nodes     []*node
 	args      Args
 }
 
-// NewNode create new Node
-func NewNode(
-	to string,
-	bind string,
-	staticVal interface{},
-	args Args,
-	nodes Nodes,
-) *Node {
-	return &Node{
-		to:        to,
-		bind:      bind,
-		staticVal: staticVal,
-		args:      args,
-		nodes:     nodes,
-	}
+func Node() *node {
+	return &node{}
 }
 
-// BindTo binds this Node to from data field
-// e.g.
-// input struct {
-//		Foo struct {
-//			Bar string `dion:"bar"`
-//		} `dion:"foo"`
-//	}{
-//		Foo: struct {
-//			Bar string `dion:"bar"`
-//		}{Bar: "a"},
-//	}
-// e.BindTo("foo.bar")
-func (e Node) BindTo(name string) Node {
-	e.bind = name
+func (e *node) Bind(bind string) *node {
+	e.bind = bind
 
 	return e
 }
 
-// To initialize binding field name from Node.bind
-// e.g.
-//
-// input
-//  struct {
-//		Foo struct {
-//			Bar string `dion:"bar"`
-//		} `dion:"foo"`
-//	}{
-//		Foo: struct {
-//			Bar string `dion:"bar"`
-//		}{Bar: "a"},
-//	}
-//
-// e.BindTo("foo.bar")
-//
-// e.To("test.name")
-//
-// output
-//
-// json { "test": { "name": "a" } }
-func (e Node) To(name string) Node {
+func (e *node) To(name string) *node {
 	e.to = name
 
 	return e
 }
 
-// StaticVal sets static value for Node, if bind data field is empty
-func (e Node) StaticVal(val interface{}) Node {
+func (e *node) From(from string) *node {
+	e.from = from
+
+	return e
+}
+
+// StaticVal sets static value for node, if bind data field is empty
+func (e *node) StaticVal(val interface{}) *node {
 	e.staticVal = val
 
 	return e
 }
 
-// AddNode adds a child Node to the parent Node
-func (e Node) AddNode(n Node) Node {
-	e.nodes = append(e.nodes, &n)
+// AddNode adds a child node to the parent node
+func (e *node) AddNode(n *node) *node {
+	e.nodes = append(e.nodes, n)
 
 	return e
 }
 
-// AddArg adds argument to arguments for Node
-func (e Node) AddArg(a Arg) Node {
+// AddArg adds argument to arguments for node
+func (e *node) AddArg(a arg) *node {
 	e.args = append(e.args, &a)
 
 	return e
+}
+
+func (e *node) toMap() map[string]interface{} {
+	var args = make([]map[string]interface{}, 0, len(e.args))
+	for _, a := range e.args {
+		args = append(args, map[string]interface{}{
+			"to":        a.to,
+			"from":      a.from,
+			"staticVal": a.staticVal,
+		})
+	}
+
+	var nodes = make([]map[string]interface{}, 0, len(e.nodes))
+	for _, n := range e.nodes {
+		nMap := n.toMap()
+		nodes = append(nodes, nMap)
+	}
+
+	return map[string]interface{}{
+		"to":        e.to,
+		"from":      e.from,
+		"staticVal": e.staticVal,
+		"nodes":     nodes,
+		"args":      args,
+	}
+}
+
+func (e *node) fromMap(m map[string]interface{}) {
+	if len(m) == 0 {
+		return
+	}
+
+	toField := m["to"]
+	if toField != nil {
+		e.to = toField.(string)
+	}
+
+	fromField := m["from"]
+	if fromField != nil {
+		e.from = fromField.(string)
+	}
+
+	staticValField := m["staticVal"]
+	e.staticVal = staticValField
+
+	argsField := m["args"]
+	if argsField != nil {
+		args, ok := argsField.([]interface{})
+		if ok {
+			e.args = make(Args, 0, len(args))
+
+			for _, iArg := range args {
+				a, ok := iArg.(map[string]interface{})
+				if !ok {
+					continue
+				}
+
+				argument := &arg{}
+
+				argTo := a["to"]
+				if argTo != nil {
+					argument.to = argTo.(string)
+				}
+
+				argFrom := a["from"]
+				if argFrom != nil {
+					argument.from = argFrom.(string)
+				}
+
+				staticVal := a["staticVal"]
+				argument.staticVal = staticVal
+
+				e.args = append(e.args, argument)
+			}
+		}
+	}
+
+	nodesField := m["nodes"]
+	if nodesField == nil {
+		return
+	}
+
+	nodes, ok := nodesField.([]interface{})
+	if !ok {
+		return
+	}
+
+	e.nodes = make([]*node, 0, len(nodes))
+	for _, iNode := range nodes {
+		nMap, ok := iNode.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		nn := &node{}
+
+		nn.fromMap(nMap)
+
+		e.nodes = append(e.nodes, nn)
+	}
 }
