@@ -35,7 +35,7 @@ func (f FileType) String() string {
 	}
 }
 
-// Template implements output file template
+// Template implements template
 type Template struct {
 	outputType FileType
 	node       *node
@@ -51,11 +51,11 @@ func NewTemplate(outputType FileType, n *node) *Template {
 	}
 }
 
-// AddNode adds a child node to the Template
-func (t *Template) AddNode(n *node) *node {
+// AddNode adds a general node to the Template
+func (t *Template) AddNode(n *node) *Template {
 	t.node = n
 
-	return t.node
+	return t
 }
 
 // ToOutputFileType sets output file type for this Template

@@ -62,10 +62,10 @@ func TestTemplate_encodeXML(t1 *testing.T) {
 
 	tmpl.ToOutputFileType(XML)
 
-	catalogNode := Node().To("catalog").AddArg(Arg().To("date").StaticVal(time.Date(2020, 12, 12, 12, 12, 12, 0, time.UTC)))
+	catalogNode := Node().To("catalog").AddAttr(Attr().To("date").StaticVal(time.Date(2020, 12, 12, 12, 12, 12, 0, time.UTC)))
 
 	productsNode := Node().To("products").Bind("Data.Products")
-	productsNode = productsNode.AddNode(Node().To("product").AddArg(Arg().To("id").From("Id")).
+	productsNode = productsNode.AddNode(Node().To("product").AddAttr(Attr().To("id").From("Id")).
 		AddNode(Node().To("name").From("Name")).
 		AddNode(Node().To("id").From("Id")).
 		AddNode(Node().To("price").From("Price")).
@@ -73,7 +73,7 @@ func TestTemplate_encodeXML(t1 *testing.T) {
 	catalogNode = catalogNode.AddNode(productsNode)
 
 	categoriesNode := Node().To("categories").Bind("Data.Categories")
-	categoriesNode = categoriesNode.AddNode(Node().To("category").From("Name").AddArg(Arg().To("cat_id").From("Id")))
+	categoriesNode = categoriesNode.AddNode(Node().To("category").From("Name").AddAttr(Attr().To("cat_id").From("Id")))
 	catalogNode = catalogNode.AddNode(categoriesNode)
 
 	tmpl.AddNode(catalogNode)

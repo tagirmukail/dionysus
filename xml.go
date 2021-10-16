@@ -2,7 +2,6 @@ package dionysus
 
 import (
 	"encoding/xml"
-	"errors"
 	"reflect"
 	"strings"
 	"time"
@@ -66,7 +65,7 @@ func (e *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool) 
 		}
 
 		if kind == reflect.Map {
-			return errors.New("static val must be only simple type")
+			return ErrStaticValOnlySimpleType
 		}
 
 		if kind == reflect.Struct {
@@ -74,7 +73,7 @@ func (e *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool) 
 
 			t, ok := iVal.(time.Time)
 			if !ok {
-				return errors.New("static val must be only simple type")
+				return ErrStaticValOnlySimpleType
 			}
 
 			_, err = p.WriteString(t.String())
@@ -139,7 +138,7 @@ func (e *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool) 
 		if kind == reflect.Struct {
 			_, ok := val.Interface().(time.Time)
 			if ok {
-				return errors.New("bind can't be time.Time")
+				return ErrBindCantTime
 			}
 
 			for _, nn := range e.nodes {
@@ -171,7 +170,7 @@ func (e *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool) 
 			}
 
 			if fieldVal.Kind() == reflect.Map {
-				return errors.New("field val must be only simple type")
+				return ErrValOnlySimpleType
 			}
 
 			if fieldVal.Kind() == reflect.Struct {
@@ -179,7 +178,7 @@ func (e *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool) 
 
 				t, ok := iVal.(time.Time)
 				if !ok {
-					return errors.New("static val must be only simple type")
+					return ErrStaticValOnlySimpleType
 				}
 
 				_, err = p.WriteString(t.String())
@@ -217,7 +216,7 @@ func (e *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool) 
 		}
 
 		if fieldVal.Kind() == reflect.Map {
-			return errors.New("field val must be only simple type")
+			return ErrValOnlySimpleType
 		}
 
 		if fieldVal.Kind() == reflect.Struct {
@@ -225,7 +224,7 @@ func (e *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool) 
 
 			t, ok := iVal.(time.Time)
 			if !ok {
-				return errors.New("static val must be only simple type")
+				return ErrStaticValOnlySimpleType
 			}
 
 			_, err = p.WriteString(t.String())
@@ -272,7 +271,7 @@ func (e *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool) 
 
 func (e *node) startXML(p *printer, val reflect.Value) error {
 	if strings.TrimSpace(e.to) == "" {
-		return errors.New("node `to` field is empty")
+		return ErrToFiledEmpty
 	}
 
 	_, err := p.WriteRune('<')
@@ -302,7 +301,7 @@ func (e *node) startXML(p *printer, val reflect.Value) error {
 
 func (e *node) endXML(p *printer) error {
 	if strings.TrimSpace(e.to) == "" {
-		return errors.New("node `to` field is empty")
+		return ErrToFiledEmpty
 	}
 
 	_, err := p.WriteString("</")
@@ -323,7 +322,7 @@ func (e *node) endXML(p *printer) error {
 	return nil
 }
 
-func (a *arg) encodeXML(p *printer, val reflect.Value) error {
+func (a *attr) encodeXML(p *printer, val reflect.Value) error {
 	_, err := p.WriteRune(' ')
 	if err != nil {
 		return err
@@ -348,13 +347,13 @@ func (a *arg) encodeXML(p *printer, val reflect.Value) error {
 		}
 
 		if kind == reflect.Map {
-			return errors.New("static val must be only simple type")
+			return ErrStaticValOnlySimpleType
 		}
 
 		if kind == reflect.Struct {
 			t, ok := statVal.Interface().(time.Time)
 			if !ok {
-				return errors.New("static val must be only simple type")
+				return ErrStaticValOnlySimpleType
 			}
 
 			_, err = p.WriteString(t.String())
@@ -389,7 +388,7 @@ func (a *arg) encodeXML(p *printer, val reflect.Value) error {
 		if kind == reflect.Struct {
 			fieldVal = val.FieldByName(a.from)
 			if !fieldVal.IsValid() {
-				return errors.New("invalid field val for attr")
+				return ErrInvalidField
 			}
 		} else {
 			fieldVal = val

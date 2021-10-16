@@ -44,10 +44,10 @@ func main() {
 
 	tmpl.ToOutputFileType(dionysus.XML)
 
-	catalogNode := dionysus.Node().To("catalog").AddArg(dionysus.Arg().To("date").StaticVal(time.Date(2020, 12, 12, 12, 12, 12, 0, time.UTC)))
+	catalogNode := dionysus.Node().To("catalog").AddAttr(dionysus.Attr().To("date").StaticVal(time.Date(2020, 12, 12, 12, 12, 12, 0, time.UTC)))
 
 	productsNode := dionysus.Node().To("products").Bind("Data.Products")
-	productsNode = productsNode.AddNode(dionysus.Node().To("product").AddArg(dionysus.Arg().To("id").From("Id")).
+	productsNode = productsNode.AddNode(dionysus.Node().To("product").AddAttr(dionysus.Attr().To("id").From("Id")).
 		AddNode(dionysus.Node().To("name").From("Name")).
 		AddNode(dionysus.Node().To("id").From("Id")).
 		AddNode(dionysus.Node().To("price").From("Price")).
@@ -55,7 +55,7 @@ func main() {
 	catalogNode = catalogNode.AddNode(productsNode)
 
 	categoriesNode := dionysus.Node().To("categories").Bind("Data.Categories")
-	categoriesNode = categoriesNode.AddNode(dionysus.Node().To("category").From("Name").AddArg(dionysus.Arg().To("cat_id").From("Id")))
+	categoriesNode = categoriesNode.AddNode(dionysus.Node().To("category").From("Name").AddAttr(dionysus.Attr().To("cat_id").From("Id")))
 	catalogNode = catalogNode.AddNode(categoriesNode)
 
 	tmpl.AddNode(catalogNode)
