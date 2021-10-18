@@ -4,9 +4,32 @@ import (
 	"bytes"
 	"time"
 
-	"github.com/tagirmukail/dionysus"
+	"github.com/tagirmukail/gotemplconstr"
 )
 
+/* RESULT
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog date="2020-12-12 12:12:12 +0000 UTC">
+    <products>
+        <product id="1">
+            <name>test1</name>
+            <id>1</id>
+            <price>234.23</price>
+            <amount>12</amount>
+        </product>
+        <product id="2">
+            <name>test2</name>
+            <id>2</id>
+            <price>5454.234</price>
+            <amount>30</amount>
+        </product>
+    </products>
+    <categories>
+        <category cat_id="1">testcat1</category>
+        <category cat_id="2">testcat2</category>
+    </categories>
+</catalog>
+*/
 func main() {
 
 	d := struct {
@@ -40,25 +63,25 @@ func main() {
 		},
 	}
 
-	tmpl := &dionysus.Template{}
+	date := time.Date(2020, 12, 12, 12, 12, 12, 0, time.UTC)
 
-	tmpl.ToOutputFileType(dionysus.XML)
+	tmpl := gotemplconstr.NewTemplate().ToOutputFileType(gotemplconstr.XML)
 
-	catalogNode := dionysus.Node().To("catalog").AddAttr(dionysus.Attr().To("date").StaticVal(time.Date(2020, 12, 12, 12, 12, 12, 0, time.UTC)))
-
-	productsNode := dionysus.Node().To("products").Bind("Data.Products")
-	productsNode = productsNode.AddNode(dionysus.Node().To("product").AddAttr(dionysus.Attr().To("id").From("Id")).
-		AddNode(dionysus.Node().To("name").From("Name")).
-		AddNode(dionysus.Node().To("id").From("Id")).
-		AddNode(dionysus.Node().To("price").From("Price")).
-		AddNode(dionysus.Node().To("amount").From("Count")))
-	catalogNode = catalogNode.AddNode(productsNode)
-
-	categoriesNode := dionysus.Node().To("categories").Bind("Data.Categories")
-	categoriesNode = categoriesNode.AddNode(dionysus.Node().To("category").From("Name").AddAttr(dionysus.Attr().To("cat_id").From("Id")))
-	catalogNode = catalogNode.AddNode(categoriesNode)
-
-	tmpl.AddNode(catalogNode)
+	tmpl.AddNode(
+		gotemplconstr.Node().To("catalog").AddAttr(gotemplconstr.Attr().To("date").StaticVal(date)).AddNode(
+			gotemplconstr.Node().To("products").Bind("Data.Products").AddNode(
+				gotemplconstr.Node().To("product").AddAttr(gotemplconstr.Attr().To("id").From("Id")).AddNode(
+					gotemplconstr.Node().To("name").From("Name"),
+					gotemplconstr.Node().To("id").From("Id"),
+					gotemplconstr.Node().To("price").From("Price"),
+					gotemplconstr.Node().To("amount").From("Count"),
+				),
+			),
+			gotemplconstr.Node().To("categories").Bind("Data.Categories").AddNode(
+				gotemplconstr.Node().To("category").From("Name").AddAttr(gotemplconstr.Attr().To("cat_id").From("Id")),
+			),
+		),
+	)
 
 	buf := &bytes.Buffer{}
 

@@ -1,4 +1,4 @@
-package dionysus
+package gotemplconstr
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ const (
 	XML
 	CSV
 	TSV
-	YML
+	YAML
 )
 
 func (f FileType) String() string {
@@ -28,8 +28,8 @@ func (f FileType) String() string {
 		return "csv"
 	case TSV:
 		return "tsv"
-	case YML:
-		return "yml"
+	case YAML:
+		return "yaml"
 	default:
 		return strconv.FormatUint(uint64(f), 10)
 	}
@@ -44,11 +44,8 @@ type Template struct {
 }
 
 // NewTemplate creates new instance of Template
-func NewTemplate(outputType FileType, n *node) *Template {
-	return &Template{
-		outputType: outputType,
-		node:       n,
-	}
+func NewTemplate() *Template {
+	return &Template{}
 }
 
 // AddNode adds a general node to the Template

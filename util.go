@@ -1,6 +1,8 @@
-package dionysus
+package gotemplconstr
 
-import "strings"
+import (
+	"strings"
+)
 
 func xmlReplaceSymbols(s string) string {
 	for _, repS := range replaceXMLSymbols {

@@ -1,4 +1,4 @@
-package dionysus
+package gotemplconstr
 
 type Args []*attr
 

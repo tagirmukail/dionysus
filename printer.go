@@ -1,8 +1,9 @@
-package dionysus
+package gotemplconstr
 
 import (
 	"bytes"
 	"io"
+	"reflect"
 )
 
 const flushSize = 1024 // bytes
@@ -41,6 +42,54 @@ func (p printer) WriteRune(r rune) (n int, err error) {
 	}()
 
 	return p.tmp.WriteRune(r)
+}
+
+func (p printer) writeNewLine() error {
+	_, err := p.WriteRune('\n')
+
+	return err
+}
+
+func (p printer) writeQuotesString(s string) (err error) {
+	_, err = p.WriteRune('"')
+	if err != nil {
+		return err
+	}
+
+	_, err = p.WriteString(s)
+	if err != nil {
+		return err
+	}
+
+	_, err = p.WriteRune('"')
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p printer) writeQuotesReflectString(kind reflect.Kind, s string) (err error) {
+	if kind == reflect.String {
+		_, err = p.WriteRune('"')
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err = p.WriteString(s)
+	if err != nil {
+		return err
+	}
+
+	if kind == reflect.String {
+		_, err = p.WriteRune('"')
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (p printer) flush(finish bool) error {

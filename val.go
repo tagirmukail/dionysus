@@ -1,4 +1,4 @@
-package dionysus
+package gotemplconstr
 
 import (
 	"fmt"

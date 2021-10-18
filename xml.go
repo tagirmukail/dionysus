@@ -1,4 +1,4 @@
-package dionysus
+package gotemplconstr
 
 import (
 	"encoding/xml"
@@ -49,11 +49,13 @@ func (t *Template) encodeXML(globVal reflect.Value) error {
 	return t.printer.flush(true)
 }
 
-func (e *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool) error {
+func (nn *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool) error {
 	switch {
-	case e.staticVal != nil:
-		val := reflect.ValueOf(e.staticVal)
-		err := e.startXML(p, val)
+	case nn == nil:
+		return nil
+	case nn.staticVal != nil:
+		val := reflect.ValueOf(nn.staticVal)
+		err := nn.startXML(p, val)
 		if err != nil {
 			return err
 		}
@@ -97,9 +99,9 @@ func (e *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool) 
 			}
 		}
 
-		return e.endXML(p)
-	case e.bind != "":
-		val, ok := getVal(e.bind, globVal)
+		return nn.endXML(p)
+	case nn.bind != "":
+		val, ok := getVal(nn.bind, globVal)
 		if !ok {
 			return nil
 		}
@@ -107,17 +109,17 @@ func (e *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool) 
 		kind := val.Kind()
 		tp := val.Type()
 
-		err := e.startXML(p, val)
+		err := nn.startXML(p, val)
 		if err != nil {
 			return err
 		}
 
 		if (kind == reflect.Slice || kind == reflect.Array) && tp.Elem().Kind() != reflect.Uint8 {
-			if len(e.nodes) == 0 {
-				return e.endXML(p)
+			if len(nn.nodes) == 0 {
+				return nn.endXML(p)
 			}
 
-			nod := e.nodes[0]
+			nod := nn.nodes[0]
 
 			for i, n := 0, val.Len(); i < n; i++ {
 				vv := val.Index(i)
@@ -128,7 +130,7 @@ func (e *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool) 
 				}
 			}
 
-			return e.endXML(p)
+			return nn.endXML(p)
 		}
 
 		if kind == reflect.Ptr {
@@ -141,30 +143,30 @@ func (e *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool) 
 				return ErrBindCantTime
 			}
 
-			for _, nn := range e.nodes {
-				err = nn.encodeXML(p, globVal, val, false)
+			for _, n := range nn.nodes {
+				err = n.encodeXML(p, globVal, val, false)
 				if err != nil {
 					return err
 				}
 			}
 		}
 
-		return e.endXML(p)
+		return nn.endXML(p)
 	case isItem && inVal.IsValid() && !inVal.IsZero():
-		err := e.startXML(p, inVal)
+		err := nn.startXML(p, inVal)
 		if err != nil {
 			return err
 		}
 
-		if len(e.nodes) > 0 {
-			for _, nn := range e.nodes {
-				err = nn.encodeXML(p, globVal, inVal, false)
+		if len(nn.nodes) > 0 {
+			for _, n := range nn.nodes {
+				err = n.encodeXML(p, globVal, inVal, false)
 				if err != nil {
 					return err
 				}
 			}
 		} else {
-			fieldVal := inVal.FieldByName(e.from)
+			fieldVal := inVal.FieldByName(nn.from)
 			if fieldVal.Kind() == reflect.Ptr {
 				fieldVal = fieldVal.Elem()
 			}
@@ -203,14 +205,14 @@ func (e *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool) 
 			}
 		}
 
-		return e.endXML(p)
-	case e.from != "" && inVal.IsValid() && !inVal.IsZero():
-		err := e.startXML(p, inVal)
+		return nn.endXML(p)
+	case nn.from != "" && inVal.IsValid() && !inVal.IsZero():
+		err := nn.startXML(p, inVal)
 		if err != nil {
 			return err
 		}
 
-		fieldVal := inVal.FieldByName(e.from)
+		fieldVal := inVal.FieldByName(nn.from)
 		if fieldVal.Kind() == reflect.Ptr {
 			fieldVal = fieldVal.Elem()
 		}
@@ -248,29 +250,29 @@ func (e *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool) 
 			}
 		}
 
-		return e.endXML(p)
+		return nn.endXML(p)
 	default:
 		zeroVal := reflect.Zero(reflect.TypeOf(0))
 
-		err := e.startXML(p, zeroVal)
+		err := nn.startXML(p, zeroVal)
 		if err != nil {
 			return err
 		}
 
-		for _, nn := range e.nodes {
-			err = nn.encodeXML(p, globVal, zeroVal, false)
+		for _, n := range nn.nodes {
+			err = n.encodeXML(p, globVal, zeroVal, false)
 			if err != nil {
 				return err
 			}
 
 		}
 
-		return e.endXML(p)
+		return nn.endXML(p)
 	}
 }
 
-func (e *node) startXML(p *printer, val reflect.Value) error {
-	if strings.TrimSpace(e.to) == "" {
+func (nn *node) startXML(p *printer, val reflect.Value) error {
+	if strings.TrimSpace(nn.to) == "" {
 		return ErrToFiledEmpty
 	}
 
@@ -279,12 +281,12 @@ func (e *node) startXML(p *printer, val reflect.Value) error {
 		return err
 	}
 
-	_, err = p.WriteString(e.to)
+	_, err = p.WriteString(nn.to)
 	if err != nil {
 		return err
 	}
 
-	for _, a := range e.args {
+	for _, a := range nn.args {
 		err = a.encodeXML(p, val)
 		if err != nil {
 			return err
@@ -299,8 +301,8 @@ func (e *node) startXML(p *printer, val reflect.Value) error {
 	return nil
 }
 
-func (e *node) endXML(p *printer) error {
-	if strings.TrimSpace(e.to) == "" {
+func (nn *node) endXML(p *printer) error {
+	if strings.TrimSpace(nn.to) == "" {
 		return ErrToFiledEmpty
 	}
 
@@ -309,7 +311,7 @@ func (e *node) endXML(p *printer) error {
 		return err
 	}
 
-	_, err = p.WriteString(e.to)
+	_, err = p.WriteString(nn.to)
 	if err != nil {
 		return err
 	}

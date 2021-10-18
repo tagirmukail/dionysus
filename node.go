@@ -1,4 +1,4 @@
-package dionysus
+package gotemplconstr
 
 // node implements Template node
 type node struct {
@@ -17,50 +17,50 @@ func Node() *node {
 
 // Bind sets a binding key. When this node is encoded, by this the bind key,
 // a binding object fetched from an encoding interface value
-func (e *node) Bind(bind string) *node {
-	e.bind = bind
+func (nn *node) Bind(bind string) *node {
+	nn.bind = bind
 
-	return e
+	return nn
 }
 
 // To sets output node tag name
-func (e *node) To(name string) *node {
-	e.to = name
+func (nn *node) To(name string) *node {
+	nn.to = name
 
-	return e
+	return nn
 }
 
 // From sets a field name by a binding object from the top-level node
-func (e *node) From(from string) *node {
-	e.from = from
+func (nn *node) From(from string) *node {
+	nn.from = from
 
-	return e
+	return nn
 }
 
 // StaticVal sets static value for node, priority, if filled
-func (e *node) StaticVal(val interface{}) *node {
-	e.staticVal = val
+func (nn *node) StaticVal(val interface{}) *node {
+	nn.staticVal = val
 
-	return e
+	return nn
 }
 
 // AddNode adds a child node
-func (e *node) AddNode(n *node) *node {
-	e.nodes = append(e.nodes, n)
+func (nn *node) AddNode(ns ...*node) *node {
+	nn.nodes = append(nn.nodes, ns...)
 
-	return e
+	return nn
 }
 
 // AddAttr adds attribute to node's attributes
-func (e *node) AddAttr(a attr) *node {
-	e.args = append(e.args, &a)
+func (nn *node) AddAttr(a attr) *node {
+	nn.args = append(nn.args, &a)
 
-	return e
+	return nn
 }
 
-func (e *node) toMap() map[string]interface{} {
-	var args = make([]map[string]interface{}, 0, len(e.args))
-	for _, a := range e.args {
+func (nn *node) toMap() map[string]interface{} {
+	var args = make([]map[string]interface{}, 0, len(nn.args))
+	for _, a := range nn.args {
 		args = append(args, map[string]interface{}{
 			"to":        a.to,
 			"from":      a.from,
@@ -68,50 +68,50 @@ func (e *node) toMap() map[string]interface{} {
 		})
 	}
 
-	var nodes = make([]map[string]interface{}, 0, len(e.nodes))
-	for _, n := range e.nodes {
+	var nodes = make([]map[string]interface{}, 0, len(nn.nodes))
+	for _, n := range nn.nodes {
 		nMap := n.toMap()
 		nodes = append(nodes, nMap)
 	}
 
 	return map[string]interface{}{
-		"to":        e.to,
-		"from":      e.from,
-		"bind":      e.bind,
-		"staticVal": e.staticVal,
+		"to":        nn.to,
+		"from":      nn.from,
+		"bind":      nn.bind,
+		"staticVal": nn.staticVal,
 		"nodes":     nodes,
 		"args":      args,
 	}
 }
 
-func (e *node) fromMap(m map[string]interface{}) {
+func (nn *node) fromMap(m map[string]interface{}) {
 	if len(m) == 0 {
 		return
 	}
 
 	toField := m["to"]
 	if toField != nil {
-		e.to = toField.(string)
+		nn.to = toField.(string)
 	}
 
 	fromField := m["from"]
 	if fromField != nil {
-		e.from = fromField.(string)
+		nn.from = fromField.(string)
 	}
 
 	bindField := m["bind"]
 	if bindField != nil {
-		e.bind = bindField.(string)
+		nn.bind = bindField.(string)
 	}
 
 	staticValField := m["staticVal"]
-	e.staticVal = staticValField
+	nn.staticVal = staticValField
 
 	argsField := m["args"]
 	if argsField != nil {
 		args, ok := argsField.([]interface{})
 		if ok {
-			e.args = make(Args, 0, len(args))
+			nn.args = make(Args, 0, len(args))
 
 			for _, iArg := range args {
 				a, ok := iArg.(map[string]interface{})
@@ -134,7 +134,7 @@ func (e *node) fromMap(m map[string]interface{}) {
 				staticVal := a["staticVal"]
 				argument.staticVal = staticVal
 
-				e.args = append(e.args, argument)
+				nn.args = append(nn.args, argument)
 			}
 		}
 	}
@@ -149,17 +149,17 @@ func (e *node) fromMap(m map[string]interface{}) {
 		return
 	}
 
-	e.nodes = make([]*node, 0, len(nodes))
+	nn.nodes = make([]*node, 0, len(nodes))
 	for _, iNode := range nodes {
 		nMap, ok := iNode.(map[string]interface{})
 		if !ok {
 			continue
 		}
 
-		nn := &node{}
+		n := &node{}
 
-		nn.fromMap(nMap)
+		n.fromMap(nMap)
 
-		e.nodes = append(e.nodes, nn)
+		nn.nodes = append(nn.nodes, n)
 	}
 }

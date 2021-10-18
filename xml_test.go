@@ -1,4 +1,4 @@
-package dionysus
+package gotemplconstr
 
 import (
 	"bytes"
@@ -58,25 +58,25 @@ func TestTemplate_encodeXML(t1 *testing.T) {
 		},
 	}
 
-	tmpl := &Template{}
+	date := time.Date(2020, 12, 12, 12, 12, 12, 0, time.UTC)
 
-	tmpl.ToOutputFileType(XML)
+	tmpl := NewTemplate().ToOutputFileType(XML)
 
-	catalogNode := Node().To("catalog").AddAttr(Attr().To("date").StaticVal(time.Date(2020, 12, 12, 12, 12, 12, 0, time.UTC)))
-
-	productsNode := Node().To("products").Bind("Data.Products")
-	productsNode = productsNode.AddNode(Node().To("product").AddAttr(Attr().To("id").From("Id")).
-		AddNode(Node().To("name").From("Name")).
-		AddNode(Node().To("id").From("Id")).
-		AddNode(Node().To("price").From("Price")).
-		AddNode(Node().To("amount").From("Count")))
-	catalogNode = catalogNode.AddNode(productsNode)
-
-	categoriesNode := Node().To("categories").Bind("Data.Categories")
-	categoriesNode = categoriesNode.AddNode(Node().To("category").From("Name").AddAttr(Attr().To("cat_id").From("Id")))
-	catalogNode = catalogNode.AddNode(categoriesNode)
-
-	tmpl.AddNode(catalogNode)
+	tmpl.AddNode(
+		Node().To("catalog").AddAttr(Attr().To("date").StaticVal(date)).AddNode(
+			Node().To("products").Bind("Data.Products").AddNode(
+				Node().To("product").AddAttr(Attr().To("id").From("Id")).AddNode(
+					Node().To("name").From("Name"),
+					Node().To("id").From("Id"),
+					Node().To("price").From("Price"),
+					Node().To("amount").From("Count"),
+				),
+			),
+			Node().To("categories").Bind("Data.Categories").AddNode(
+				Node().To("category").From("Name").AddAttr(Attr().To("cat_id").From("Id")),
+			),
+		),
+	)
 
 	buf := &bytes.Buffer{}
 

@@ -1,4 +1,4 @@
-package dionysus
+package gotemplconstr
 
 import (
 	"fmt"
@@ -11,8 +11,8 @@ func (t *Template) Encode(v interface{}) error {
 	//	return t.encodeJSON(v)
 	//case CSV, TSV:
 	//	return t.encodeCSV(v)
-	//case YML:
-	//	return t.encodeYML(v)
+	case YAML:
+		return t.encodeYAML(reflect.ValueOf(v))
 	case XML:
 		return t.encodeXML(reflect.ValueOf(v))
 	default:
