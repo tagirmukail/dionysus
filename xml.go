@@ -35,13 +35,21 @@ type replaceSymbol struct {
 	to   string
 }
 
+func xmlReplaceSymbols(s string) string {
+	for _, repS := range replaceXMLSymbols {
+		s = strings.ReplaceAll(s, repS.from, repS.to)
+	}
+
+	return s
+}
+
 func (t *Template) encodeXML(globVal reflect.Value) error {
 	_, err := t.printer.WriteString(xml.Header)
 	if err != nil {
 		return err
 	}
 
-	err = t.node.encodeXML(&t.printer, globVal, reflect.Zero(reflect.TypeOf(0)), false)
+	err = t.node.encodeXML(&t.printer, globVal, reflect.Value{}, false)
 	if err != nil {
 		return err
 	}
@@ -70,33 +78,9 @@ func (nn *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool)
 			return ErrStaticValOnlySimpleType
 		}
 
-		if kind == reflect.Struct {
-			iVal := val.Interface()
-
-			t, ok := iVal.(time.Time)
-			if !ok {
-				return ErrStaticValOnlySimpleType
-			}
-
-			_, err = p.WriteString(t.String())
-			if err != nil {
-				return err
-			}
-		} else {
-			s, b, err := marshalSimpleVal(val)
-			if err != nil {
-				return err
-			} else if b != nil {
-				_, err = p.Write(b)
-				if err != nil {
-					return err
-				}
-			} else {
-				_, err = p.WriteString(xmlReplaceSymbols(s))
-				if err != nil {
-					return err
-				}
-			}
+		err = p.xmlWriteReflectVal(val)
+		if err != nil {
+			return err
 		}
 
 		return nn.endXML(p)
@@ -175,33 +159,9 @@ func (nn *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool)
 				return ErrValOnlySimpleType
 			}
 
-			if fieldVal.Kind() == reflect.Struct {
-				iVal := fieldVal.Interface()
-
-				t, ok := iVal.(time.Time)
-				if !ok {
-					return ErrStaticValOnlySimpleType
-				}
-
-				_, err = p.WriteString(t.String())
-				if err != nil {
-					return err
-				}
-			} else {
-				s, b, err := marshalSimpleVal(fieldVal)
-				if err != nil {
-					return err
-				} else if b != nil {
-					_, err = p.Write(b)
-					if err != nil {
-						return err
-					}
-				} else {
-					_, err = p.WriteString(xmlReplaceSymbols(s))
-					if err != nil {
-						return err
-					}
-				}
+			err = p.xmlWriteReflectVal(fieldVal)
+			if err != nil {
+				return err
 			}
 		}
 
@@ -221,46 +181,22 @@ func (nn *node) encodeXML(p *printer, globVal, inVal reflect.Value, isItem bool)
 			return ErrValOnlySimpleType
 		}
 
-		if fieldVal.Kind() == reflect.Struct {
-			iVal := fieldVal.Interface()
-
-			t, ok := iVal.(time.Time)
-			if !ok {
-				return ErrStaticValOnlySimpleType
-			}
-
-			_, err = p.WriteString(t.String())
-			if err != nil {
-				return err
-			}
-		} else {
-			s, b, err := marshalSimpleVal(fieldVal)
-			if err != nil {
-				return err
-			} else if b != nil {
-				_, err = p.Write(b)
-				if err != nil {
-					return err
-				}
-			} else {
-				_, err = p.WriteString(xmlReplaceSymbols(s))
-				if err != nil {
-					return err
-				}
-			}
+		err = p.xmlWriteReflectVal(fieldVal)
+		if err != nil {
+			return err
 		}
 
 		return nn.endXML(p)
 	default:
-		zeroVal := reflect.Zero(reflect.TypeOf(0))
+		val := reflect.Value{}
 
-		err := nn.startXML(p, zeroVal)
+		err := nn.startXML(p, val)
 		if err != nil {
 			return err
 		}
 
 		for _, n := range nn.nodes {
-			err = n.encodeXML(p, globVal, zeroVal, false)
+			err = n.encodeXML(p, globVal, val, false)
 			if err != nil {
 				return err
 			}
@@ -352,69 +288,89 @@ func (a *attr) encodeXML(p *printer, val reflect.Value) error {
 			return ErrStaticValOnlySimpleType
 		}
 
-		if kind == reflect.Struct {
-			t, ok := statVal.Interface().(time.Time)
-			if !ok {
-				return ErrStaticValOnlySimpleType
-			}
-
-			_, err = p.WriteString(t.String())
-			if err != nil {
-				return err
-			}
-		} else {
-			s, b, err := marshalSimpleVal(statVal)
-			if err != nil {
-				return err
-			} else if b != nil {
-				_, err = p.Write(b)
-				if err != nil {
-					return err
-				}
-			} else {
-				_, err = p.WriteString(xmlReplaceSymbols(s))
-				if err != nil {
-					return err
-				}
-			}
-		}
-	} else {
-		kind := val.Kind()
-
-		if kind == reflect.Ptr {
-			val = val.Elem()
-			kind = val.Kind()
-		}
-
-		var fieldVal reflect.Value
-		if kind == reflect.Struct {
-			fieldVal = val.FieldByName(a.from)
-			if !fieldVal.IsValid() {
-				return ErrInvalidField
-			}
-		} else {
-			fieldVal = val
-		}
-
-		s, b, err := marshalSimpleVal(fieldVal)
+		err = p.xmlWriteReflectVal(statVal)
 		if err != nil {
 			return err
-		} else if b != nil {
-			_, err = p.Write(b)
-			if err != nil {
-				return err
-			}
-		} else {
-			_, err = p.WriteString(xmlReplaceSymbols(s))
-			if err != nil {
-				return err
-			}
+		}
+
+		_, err = p.WriteString(`"`)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	kind := val.Kind()
+
+	if kind == reflect.Ptr {
+		val = val.Elem()
+		kind = val.Kind()
+	}
+
+	var fieldVal reflect.Value
+	if kind == reflect.Struct {
+		fieldVal = val.FieldByName(a.from)
+		if !fieldVal.IsValid() {
+			return ErrInvalidField
+		}
+	} else {
+		fieldVal = val
+	}
+
+	s, b, err := marshalSimpleVal(fieldVal)
+	if err != nil {
+		return err
+	} else if b != nil {
+		_, err = p.Write(b)
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err = p.WriteString(xmlReplaceSymbols(s))
+		if err != nil {
+			return err
 		}
 	}
 
 	_, err = p.WriteString(`"`)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (p printer) xmlWriteReflectVal(val reflect.Value) (err error) {
+	kind := val.Kind()
+
+	if kind == reflect.Struct {
+		t, ok := val.Interface().(time.Time)
+		if !ok {
+			return ErrStaticValOnlySimpleType
+		}
+
+		_, err = p.WriteString(t.String())
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	s, b, err := marshalSimpleVal(val)
+	if err != nil {
+		return err
+	} else if b != nil {
+		_, err = p.Write(b)
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err = p.WriteString(xmlReplaceSymbols(s))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

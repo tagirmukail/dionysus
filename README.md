@@ -1,6 +1,6 @@
 # Gotemplconstr
 
-Is a template constructor. The package provides APIs for creating flexible templates, which can later be stored in json format. To do this, the methods `MarshalJSON` and `UnmarshalJSON` are presented.
+This is a template constructor that allows you to automate the construction of templates. The package provides APIs for creating flexible templates, which can later be stored in json format. To do this, the methods `MarshalJSON` and `UnmarshalJSON` are presented.
 
 ### Get started
 ```go

@@ -9,7 +9,7 @@ const defaultPadding = "  "
 
 func (t *Template) encodeYAML(v reflect.Value) error {
 
-	err := t.node.encodeYAML(&t.printer, 0, v, reflect.Zero(reflect.TypeOf(0)),
+	err := t.node.encodeYAML(&t.printer, 0, v, reflect.Value{},
 		false, true, false)
 	if err != nil {
 		return err
@@ -49,43 +49,7 @@ func (nn *node) encodeYAML(p *printer, padding uint, globVal, inVal reflect.Valu
 			return ErrStaticValOnlySimpleType
 		}
 
-		if kind == reflect.Struct {
-			iVal := val.Interface()
-
-			t, ok := iVal.(time.Time)
-			if !ok {
-				return ErrStaticValOnlySimpleType
-			}
-
-			err = p.writeQuotesString(t.String())
-			if err != nil {
-				return err
-			}
-
-			err = p.writeNewLine()
-			if err != nil {
-				return err
-			}
-
-			break
-		}
-
-		s, b, err := marshalSimpleVal(val)
-		if err != nil {
-			return err
-		} else if b != nil {
-			_, err = p.Write(b)
-			if err != nil {
-				return err
-			}
-		} else {
-			err = p.writeQuotesReflectString(kind, s)
-			if err != nil {
-				return err
-			}
-		}
-
-		err = p.writeNewLine()
+		err = p.yamlWriteReflectVal(val, true)
 		if err != nil {
 			return err
 		}
@@ -184,45 +148,9 @@ func (nn *node) encodeYAML(p *printer, padding uint, globVal, inVal reflect.Valu
 			return ErrValOnlySimpleType
 		}
 
-		if kind == reflect.Struct {
-			iVal := fieldVal.Interface()
-
-			t, ok := iVal.(time.Time)
-			if !ok {
-				return ErrStaticValOnlySimpleType
-			}
-
-			_, err = p.WriteRune('"')
-			if err != nil {
-				return err
-			}
-
-			_, err = p.WriteString(t.String())
-			if err != nil {
-				return err
-			}
-
-			_, err = p.WriteRune('"')
-			if err != nil {
-				return err
-			}
-
-			break
-		}
-
-		s, b, err := marshalSimpleVal(fieldVal)
+		err = p.yamlWriteReflectVal(fieldVal, false)
 		if err != nil {
 			return err
-		} else if b != nil {
-			_, err = p.Write(b)
-			if err != nil {
-				return err
-			}
-		} else {
-			err = p.writeQuotesReflectString(kind, s)
-			if err != nil {
-				return err
-			}
 		}
 	case nn.from != "" && inVal.IsValid() && !inVal.IsZero():
 		if !isItemField {
@@ -243,43 +171,7 @@ func (nn *node) encodeYAML(p *printer, padding uint, globVal, inVal reflect.Valu
 			return ErrValOnlySimpleType
 		}
 
-		if kind == reflect.Struct {
-			iVal := fieldVal.Interface()
-
-			t, ok := iVal.(time.Time)
-			if !ok {
-				return ErrStaticValOnlySimpleType
-			}
-
-			err = p.writeQuotesString(t.String())
-			if err != nil {
-				return err
-			}
-
-			err = p.writeNewLine()
-			if err != nil {
-				return err
-			}
-
-			break
-		}
-
-		s, b, err := marshalSimpleVal(fieldVal)
-		if err != nil {
-			return err
-		} else if b != nil {
-			_, err = p.Write(b)
-			if err != nil {
-				return err
-			}
-		} else {
-			err = p.writeQuotesReflectString(kind, s)
-			if err != nil {
-				return err
-			}
-		}
-
-		err = p.writeNewLine()
+		err = p.yamlWriteReflectVal(fieldVal, true)
 		if err != nil {
 			return err
 		}
@@ -330,6 +222,57 @@ func (nn *node) yamlStart(p *printer, padding uint, isItem, isStatic bool) (err 
 func writePadding(p *printer, padding uint) (err error) {
 	for i := 0; i < int(padding); i++ {
 		_, err = p.WriteString(defaultPadding)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p printer) yamlWriteReflectVal(val reflect.Value, endNewLine bool) (err error) {
+	kind := val.Kind()
+
+	if kind == reflect.Struct {
+		iVal := val.Interface()
+
+		t, ok := iVal.(time.Time)
+		if !ok {
+			return ErrStaticValOnlySimpleType
+		}
+
+		err = p.writeQuotesString(t.String())
+		if err != nil {
+			return err
+		}
+
+		if endNewLine {
+			err = p.writeNewLine()
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	s, b, err := marshalSimpleVal(val)
+	if err != nil {
+		return err
+	} else if b != nil {
+		_, err = p.Write(b)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = p.writeQuotesReflectString(kind, s)
+		if err != nil {
+			return err
+		}
+	}
+
+	if endNewLine {
+		err = p.writeNewLine()
 		if err != nil {
 			return err
 		}
