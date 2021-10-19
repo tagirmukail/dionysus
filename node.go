@@ -7,7 +7,7 @@ type node struct {
 	bind      string
 	staticVal interface{}
 	nodes     []*node
-	args      Args
+	attrs     Attrs
 }
 
 // Node creates new node instance
@@ -53,15 +53,15 @@ func (nn *node) AddNode(ns ...*node) *node {
 
 // AddAttr adds attribute to node's attributes
 func (nn *node) AddAttr(a attr) *node {
-	nn.args = append(nn.args, &a)
+	nn.attrs = append(nn.attrs, &a)
 
 	return nn
 }
 
 func (nn *node) toMap() map[string]interface{} {
-	var args = make([]map[string]interface{}, 0, len(nn.args))
-	for _, a := range nn.args {
-		args = append(args, map[string]interface{}{
+	var attrs = make([]map[string]interface{}, 0, len(nn.attrs))
+	for _, a := range nn.attrs {
+		attrs = append(attrs, map[string]interface{}{
 			"to":        a.to,
 			"from":      a.from,
 			"staticVal": a.staticVal,
@@ -80,7 +80,7 @@ func (nn *node) toMap() map[string]interface{} {
 		"bind":      nn.bind,
 		"staticVal": nn.staticVal,
 		"nodes":     nodes,
-		"args":      args,
+		"attrs":     attrs,
 	}
 }
 
@@ -107,34 +107,34 @@ func (nn *node) fromMap(m map[string]interface{}) {
 	staticValField := m["staticVal"]
 	nn.staticVal = staticValField
 
-	argsField := m["args"]
-	if argsField != nil {
-		args, ok := argsField.([]interface{})
+	attrsField := m["attrs"]
+	if attrsField != nil {
+		attrs, ok := attrsField.([]interface{})
 		if ok {
-			nn.args = make(Args, 0, len(args))
+			nn.attrs = make(Attrs, 0, len(attrs))
 
-			for _, iArg := range args {
-				a, ok := iArg.(map[string]interface{})
+			for _, iAttr := range attrs {
+				a, ok := iAttr.(map[string]interface{})
 				if !ok {
 					continue
 				}
 
-				argument := &attr{}
+				attribute := &attr{}
 
-				argTo := a["to"]
-				if argTo != nil {
-					argument.to = argTo.(string)
+				attrTo := a["to"]
+				if attrTo != nil {
+					attribute.to = attrTo.(string)
 				}
 
-				argFrom := a["from"]
-				if argFrom != nil {
-					argument.from = argFrom.(string)
+				attrFrom := a["from"]
+				if attrFrom != nil {
+					attribute.from = attrFrom.(string)
 				}
 
 				staticVal := a["staticVal"]
-				argument.staticVal = staticVal
+				attribute.staticVal = staticVal
 
-				nn.args = append(nn.args, argument)
+				nn.attrs = append(nn.attrs, attribute)
 			}
 		}
 	}

@@ -1,6 +1,6 @@
 package gotemplconstr
 
-type Args []*attr
+type Attrs []*attr
 
 // attr implement node attribute
 type attr struct {

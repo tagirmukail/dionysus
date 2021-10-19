@@ -222,7 +222,7 @@ func (nn *node) startXML(p *printer, val reflect.Value) error {
 		return err
 	}
 
-	for _, a := range nn.args {
+	for _, a := range nn.attrs {
 		err = a.encodeXML(p, val)
 		if err != nil {
 			return err
