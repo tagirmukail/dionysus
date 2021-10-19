@@ -234,7 +234,6 @@ Encoding result:
 	print(bts)
 	
 	// bts is equal to jsonText
-`
 ```
 
 More examples in [cmd](./cmd)
